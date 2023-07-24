@@ -3,6 +3,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import 'dotenv/config'
 import { Usuario } from './models/Usuario.js';
+import moment from 'moment/moment.js';
 
 const app = express()
 
@@ -35,11 +36,14 @@ app.post('/usuario', async (req, res) => {
     const { nome, idade, ativo, email } = req.body;
 
     // crio o objeto usuario copiado do objeto body
-    const usuario = { nome, idade, ativo, email }
+    const usuario = { nome, idade, ativo, email };
 
     //cria o usuário através do mongoose
-    await Usuario.create(usuario)
-    res.status(201).json('Usuário criado com sucesso!')
+    const usuarioBD = await Usuario.create(usuario);
+    res.status(201).json({
+        data: usuarioBD,
+        msg: 'Usuário criado com sucesso!'
+    });
 });
 
 // atualizar usuário
@@ -61,6 +65,31 @@ app.get('/usuarios', async (req, res) => {
 
     res.status(200).json(usuarios)
 
+})
+
+app.get('/usuario/:id', async (req,res) =>{
+    const id = req.params.id
+
+    const usuario = await Usuario.findOne({_id: id})
+
+    res.status(200).json(usuario)
+
+})
+
+app.delete('/usuario/:id', async (req, res) =>{
+    const id = req.params.id
+
+    //Busca o usuário, antes de deletar, com as suas informações
+    const usuarioBD = await Usuario.findOne({ _id: id})
+
+    //Deleta o usuário do banco
+    const usuario = await Usuario.deleteOne({_id: id})
+
+    //Pego a data atual, new Date(), e coloco no formato 27/07/2023 20:06:55 
+    let date = moment(new Date()).format('DD/MM/YYYY hh:mm:ss')
+    let msg = `O usuário ${usuarioBD.nome} foi excluído com sucesso às ${date}!`
+
+    res.status(200).json({msg})
 })
 
 
